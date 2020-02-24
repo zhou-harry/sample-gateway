@@ -1,0 +1,33 @@
+server:
+  port: 7071
+spring:
+  application:
+    name: gateway-server
+  cloud:
+    gateway:
+      routes:
+      - id: user_route
+        # lb代表从注册中心获取服务
+        uri: lb://user-server
+        order: 0
+        predicates:
+        - Path=/userapi/**
+        filters:
+        #StripPrefix=1 标示过滤器是去掉一个路径
+        - StripPrefix=1
+        - name: Hystrix
+          args:
+            name: fallbackcmd
+            fallbackUri: forward:/fallback
+  hystrix.command.fallbackcmd.execution.isolation.thread.timeoutInMilliseconds: 5000
+## 关闭管理端actuator 的安全
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ["health","info"]
+### 向注册中心注册（如果此处为true标示以集群方式启动,相互交叉注册）
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:6060/eureka
